@@ -6,6 +6,8 @@ import { useUnread } from '../context/UnreadContext'
 const links = [
   { to: '/',            label: 'Dashboard',    icon: '▦' },
   { to: '/projects',    label: 'Projects',     icon: '◉' },
+  { to: '/categories',  label: 'Categories',   icon: '⊞' },
+  { to: '/media',       label: 'Media',        icon: '⊡' },
   { to: '/about',       label: 'About',        icon: '◌' },
   { to: '/testimonials',label: 'Testimonials', icon: '❝' },
   { to: '/faq',         label: 'FAQ',          icon: '?' },

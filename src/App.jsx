@@ -13,6 +13,8 @@ import BlogForm from './pages/BlogForm'
 import Messages from './pages/Messages'
 import FAQ from './pages/FAQ'
 import Settings from './pages/Settings'
+import Categories from './pages/Categories'
+import MediaLibrary from './pages/MediaLibrary'
 import Layout from './components/Layout'
 
 function ProtectedRoute({ children }) {
@@ -39,6 +41,8 @@ export default function App() {
             <Route path="projects" element={<Projects />} />
             <Route path="projects/new" element={<ProjectForm />} />
             <Route path="projects/:id" element={<ProjectForm />} />
+            <Route path="categories" element={<Categories />} />
+            <Route path="media" element={<MediaLibrary />} />
             <Route path="about" element={<About />} />
             <Route path="testimonials" element={<Testimonials />} />
             <Route path="testimonials/new" element={<TestimonialForm />} />

@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, rectSortingStrategy, arrayMove, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { compressImage } from '../lib/compressImage'
 
 const API = import.meta.env.VITE_API_URL || '/api'
 
@@ -36,7 +37,8 @@ export default function MultiImageUpload({ value = [], onChange, label, max = 10
     setUploading(true)
     const token = localStorage.getItem('token')
     const form = new FormData()
-    Array.from(files).forEach(f => form.append('images', f))
+    const compressed = await Promise.all(Array.from(files).map(f => compressImage(f)))
+    compressed.forEach(f => form.append('images', f))
     try {
       const res = await fetch(`${API}/upload/multiple`, {
         method: 'POST',

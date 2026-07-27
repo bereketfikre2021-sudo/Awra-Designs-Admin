@@ -6,8 +6,10 @@ import Btn from '../components/Btn'
 import Field, { Input, Textarea, Select } from '../components/Field'
 import ImageUpload from '../components/ImageUpload'
 import MultiImageUpload from '../components/MultiImageUpload'
+import DraftBanner from '../components/DraftBanner'
 import { useToast, ToastContainer } from '../components/Toast'
 import { useUnsavedWarning } from '../hooks/useUnsavedWarning'
+import { useDraftAutosave } from '../hooks/useDraftAutosave'
 
 const EMPTY = {
   title: '', category: '', filter: '', shortDescription: '', description: '',
@@ -15,19 +17,41 @@ const EMPTY = {
   services: [], isFeatured: false, isPublished: false, order: 0,
 }
 
-const FILTERS = [
-  'Architectural Layouts & Spatial Programming',
-  'Renovations & Transformations',
-  'Facades & Exterior 3D Designs',
-  'Lounges & Family Rooms',
-  'Master Bedrooms & Suites',
-  "Kids' Bedrooms & Nurseries",
-  'Luxury Bathrooms & Powder Rooms',
-  'Terraces & Verandas',
-  'Islamic Luxury Interiors',
-  'Corporate Offices & Workspaces',
-  'Beauty Salons, Wellness & Retail',
-  'Fences, Gates & Compound Seating',
+const FILTER_GROUPS = [
+  {
+    label: 'Architecture',
+    options: [
+      'Architectural Layouts & Spatial Programming',
+      'Renovations & Transformations',
+      'Facades & Exterior 3D Designs',
+    ],
+  },
+  {
+    label: 'Residential',
+    options: [
+      'Lounges & Family Rooms',
+      'Master Bedrooms & Suites',
+      "Kids' Bedrooms & Nurseries",
+      'Luxury Bathrooms & Powder Rooms',
+      'Terraces & Verandas',
+      'Islamic Luxury Interiors',
+      'Gym',
+      'Steam & Sauna',
+    ],
+  },
+  {
+    label: 'Commercial',
+    options: [
+      'Corporate Offices & Workspaces',
+      'Beauty Salons, Wellness & Retail',
+    ],
+  },
+  {
+    label: 'Outdoor',
+    options: [
+      'Fences, Gates & Compound Seating',
+    ],
+  },
 ]
 
 export default function ProjectForm() {
@@ -40,6 +64,17 @@ export default function ProjectForm() {
   const [servicesInput, setServicesInput] = useState('')
   const [isDirty, setIsDirty] = useState(false)
   useUnsavedWarning(isDirty)
+
+  // Draft autosave — only for new projects (no id)
+  const draftKey = id ? null : 'project-new-draft'
+  const { hasDraft, restoreDraft, clearDraft } = useDraftAutosave(draftKey, { form, servicesInput }, isDirty)
+  const [draftSavedAt, setDraftSavedAt] = useState(() => {
+    if (id) return null
+    try {
+      const raw = localStorage.getItem('project-new-draft')
+      return raw ? JSON.parse(raw).savedAt : null
+    } catch { return null }
+  })
 
   useEffect(() => {
     if (!id) return
@@ -83,6 +118,7 @@ export default function ProjectForm() {
         await api.post('/projects', payload)
         show('Project created')
       }
+      clearDraft()
       navigate('/projects')
     } catch (err) {
       show(err.message, 'error')
@@ -103,6 +139,17 @@ export default function ProjectForm() {
           </div>
         }
       />
+      {!id && draftSavedAt && (
+        <DraftBanner
+          savedAt={draftSavedAt}
+          onRestore={() => {
+            const d = restoreDraft()
+            if (d) { setForm(d.form); setServicesInput(d.servicesInput || '') }
+            setDraftSavedAt(null)
+          }}
+          onDiscard={() => { clearDraft(); setDraftSavedAt(null) }}
+        />
+      )}
       <form onSubmit={handleSubmit} className="p-8 max-w-3xl space-y-6">
 
         {/* Basic info */}
@@ -117,20 +164,28 @@ export default function ProjectForm() {
 
         <div className="grid grid-cols-2 gap-5">
           <Field label="Category" required error={errors.filter}>
-            <Select value={form.filter} onChange={e => { set('filter', e.target.value); set('category', e.target.value) }} error={errors.filter}>
+            <select
+              value={form.filter}
+              onChange={e => { set('filter', e.target.value); set('category', e.target.value) }}
+              className={`w-full bg-[#0a0a0a] border px-3 py-2 text-sm text-white focus:outline-none focus:border-neutral-500 transition-colors
+                ${errors.filter ? 'border-red-500' : 'border-neutral-800'}`}
+            >
               <option value="">Select category…</option>
-              {FILTERS.map(f => <option key={f} value={f}>{f}</option>)}
-            </Select>
+              {FILTER_GROUPS.map(group => (
+                <optgroup key={group.label} label={`── ${group.label} ──`}>
+                  {group.options.map(opt => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
           </Field>
-          <Field label="Year" required error={errors.year}>
-            <Input value={form.year} onChange={e => set('year', e.target.value)} error={errors.year} placeholder="2024" />
+          <Field label="Type" required error={errors.type}>
+            <Input value={form.type} onChange={e => set('type', e.target.value)} error={errors.type} placeholder="Residential / Commercial" />
           </Field>
         </div>
 
         <div className="grid grid-cols-2 gap-5">
-          <Field label="Type" required error={errors.type}>
-            <Input value={form.type} onChange={e => set('type', e.target.value)} error={errors.type} placeholder="Hospitality" />
-          </Field>
           <Field label="Client">
             <Input value={form.client || ''} onChange={e => set('client', e.target.value)} placeholder="Client name" />
           </Field>

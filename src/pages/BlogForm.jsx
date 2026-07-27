@@ -6,8 +6,10 @@ import Btn from '../components/Btn'
 import Field, { Input, Textarea } from '../components/Field'
 import ImageUpload from '../components/ImageUpload'
 import SeoPreview from '../components/SeoPreview'
+import DraftBanner from '../components/DraftBanner'
 import { useToast, ToastContainer } from '../components/Toast'
 import { useUnsavedWarning } from '../hooks/useUnsavedWarning'
+import { useDraftAutosave } from '../hooks/useDraftAutosave'
 
 const EMPTY = {
   title: '', excerpt: '', content: '', coverImage: '', category: '',
@@ -25,6 +27,16 @@ export default function BlogForm() {
   const [tagsInput, setTagsInput] = useState('')
   const [isDirty, setIsDirty] = useState(false)
   useUnsavedWarning(isDirty)
+
+  const draftKey = id ? null : 'blog-new-draft'
+  const { restoreDraft, clearDraft } = useDraftAutosave(draftKey, { form, tagsInput }, isDirty)
+  const [draftSavedAt, setDraftSavedAt] = useState(() => {
+    if (id) return null
+    try {
+      const raw = localStorage.getItem('blog-new-draft')
+      return raw ? JSON.parse(raw).savedAt : null
+    } catch { return null }
+  })
 
   useEffect(() => {
     if (!id) return
@@ -64,6 +76,7 @@ export default function BlogForm() {
         await api.post('/blog', payload)
         show('Post created')
       }
+      clearDraft()
       navigate('/blog')
     } catch (err) {
       show(err.message, 'error')
@@ -84,6 +97,17 @@ export default function BlogForm() {
           </div>
         }
       />
+      {!id && draftSavedAt && (
+        <DraftBanner
+          savedAt={draftSavedAt}
+          onRestore={() => {
+            const d = restoreDraft()
+            if (d) { setForm(d.form); setTagsInput(d.tagsInput || '') }
+            setDraftSavedAt(null)
+          }}
+          onDiscard={() => { clearDraft(); setDraftSavedAt(null) }}
+        />
+      )}
       <form onSubmit={handleSubmit} className="p-8 max-w-3xl space-y-5">
 
         <Field label="Title" required error={errors.title}>

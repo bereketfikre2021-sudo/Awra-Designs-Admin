@@ -15,7 +15,7 @@ import { timeAgo } from '../lib/timeAgo'
 
 const FRONTEND = import.meta.env.VITE_FRONTEND_URL || 'http://localhost:5173'
 
-const GROUPS = [
+const STATIC_GROUPS = [
   { id: 'All', label: 'All', cats: [] },
   {
     id: 'Architecture', label: 'Architecture',
@@ -31,6 +31,7 @@ const GROUPS = [
       'Lounges & Family Rooms', 'Master Bedrooms & Suites',
       "Kids' Bedrooms & Nurseries", 'Luxury Bathrooms & Powder Rooms',
       'Terraces & Verandas', 'Islamic Luxury Interiors',
+      'Gym', 'Steam & Sauna',
     ],
   },
   {
@@ -125,32 +126,50 @@ function ActionSheet({ project, onClose, onTogglePublish, onToggleFeatured, onDu
 
 export default function Projects() {
   const [projects, setProjects] = useState([])
+  const [groups, setGroups] = useState(STATIC_GROUPS)
   const [loading, setLoading] = useState(true)
   const [activeGroup, setActiveGroup] = useState('All')
   const [activeSub, setActiveSub] = useState(null)
+  const [openDropdown, setOpenDropdown] = useState(null)
   const [reordering, setReordering] = useState(false)
   const [sheetProject, setSheetProject] = useState(null)
+  const [selected, setSelected] = useState(new Set()) // bulk selection
+  const [bulkWorking, setBulkWorking] = useState(false)
   const { show } = useToast()
   const navigate = useNavigate()
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
 
   const load = () => {
     setLoading(true)
-    api.get('/projects/admin/all')
-      .then(d => setProjects(d.data))
+    Promise.all([
+      api.get('/projects/admin/all'),
+      api.get('/project-groups/admin/all').catch(() => ({ data: [] })),
+    ])
+      .then(([projRes, groupRes]) => {
+        setProjects(projRes.data)
+        if (groupRes.data?.length > 0) {
+          const allGroup = { id: 'All', label: 'All', cats: [] }
+          const apiGroups = groupRes.data.map(g => ({
+            id: g.label,
+            label: g.label,
+            cats: g.subcategories || [],
+          }))
+          setGroups([allGroup, ...apiGroups])
+        }
+      })
       .catch(e => show(e.message, 'error'))
       .finally(() => setLoading(false))
   }
   useEffect(load, [])
 
-  const currentGroup = GROUPS.find(g => g.id === activeGroup)
+  const currentGroup = groups.find(g => g.id === activeGroup)
   const filtered = useMemo(() => {
     if (activeGroup === 'All') return projects
     if (activeSub) return projects.filter(p => p.category === activeSub || p.filter === activeSub)
     return projects.filter(p => currentGroup.cats.includes(p.category) || currentGroup.cats.includes(p.filter))
-  }, [projects, activeGroup, activeSub])
+  }, [projects, activeGroup, activeSub, groups])
 
-  const handleGroup = id => { setActiveGroup(id); setActiveSub(null) }
+  const handleGroup = id => { setActiveGroup(id); setActiveSub(null); setOpenDropdown(null) }
 
   const handleDragEnd = async (event) => {
     const { active, over } = event
@@ -198,6 +217,39 @@ export default function Projects() {
     } catch (e) { show(e.message, 'error') }
   }
 
+  // ── Bulk actions ──────────────────────────────────────────────────────────
+  const toggleSelect = (id) => setSelected(s => {
+    const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n
+  })
+  const toggleSelectAll = () => {
+    if (selected.size === filtered.length) setSelected(new Set())
+    else setSelected(new Set(filtered.map(p => p.id)))
+  }
+  const clearSelection = () => setSelected(new Set())
+
+  const bulkPublish = async (value) => {
+    setBulkWorking(true)
+    try {
+      await Promise.all([...selected].map(id => api.patch(`/projects/${id}`, { isPublished: value })))
+      setProjects(ps => ps.map(p => selected.has(p.id) ? { ...p, isPublished: value } : p))
+      show(`${selected.size} project(s) ${value ? 'published' : 'unpublished'}`)
+      clearSelection()
+    } catch (e) { show(e.message, 'error') }
+    finally { setBulkWorking(false) }
+  }
+
+  const bulkDelete = async () => {
+    if (!confirm(`Delete ${selected.size} project(s)? This cannot be undone.`)) return
+    setBulkWorking(true)
+    try {
+      await Promise.all([...selected].map(id => api.delete(`/projects/${id}`)))
+      setProjects(ps => ps.filter(p => !selected.has(p.id)))
+      show(`${selected.size} project(s) deleted`)
+      clearSelection()
+    } catch (e) { show(e.message, 'error') }
+    finally { setBulkWorking(false) }
+  }
+
   return (
     <div>
       <PageHeader
@@ -206,35 +258,74 @@ export default function Projects() {
         action={<Link to="/projects/new"><Btn>+ New</Btn></Link>}
       />
 
-      {/* Group tabs */}
-      <div className="flex items-center gap-0 overflow-x-auto scrollbar-hide border-b border-neutral-900 px-4 md:px-8">
-        {GROUPS.map(g => (
-          <button key={g.id} onClick={() => handleGroup(g.id)}
-            className={`relative flex-shrink-0 px-4 py-3 text-[10px] uppercase tracking-[0.18em] font-medium transition-colors whitespace-nowrap
-              ${activeGroup === g.id ? 'text-white' : 'text-neutral-600 hover:text-neutral-300'}`}>
-            {g.label}
-            {activeGroup === g.id && <span className="absolute bottom-0 left-0 right-0 h-px bg-white" />}
-          </button>
-        ))}
-      </div>
-
-      {/* Sub chips */}
-      {activeGroup !== 'All' && currentGroup?.cats.length > 0 && (
-        <div className="flex items-center gap-2 px-4 md:px-8 py-2 overflow-x-auto scrollbar-hide border-b border-neutral-900">
-          <button onClick={() => setActiveSub(null)}
-            className={`flex-shrink-0 px-3 py-1 text-[10px] uppercase tracking-[0.14em] border transition-colors whitespace-nowrap
-              ${!activeSub ? 'border-white text-white' : 'border-neutral-800 text-neutral-600 hover:border-neutral-600 hover:text-neutral-300'}`}>
-            All {currentGroup.label}
-          </button>
-          {currentGroup.cats.map(cat => (
-            <button key={cat} onClick={() => setActiveSub(prev => prev === cat ? null : cat)}
-              className={`flex-shrink-0 px-3 py-1 text-[10px] uppercase tracking-[0.14em] border transition-colors whitespace-nowrap
-                ${activeSub === cat ? 'border-white text-white' : 'border-neutral-800 text-neutral-600 hover:border-neutral-600 hover:text-neutral-300'}`}>
-              {cat.split(' ').slice(0,3).join(' ')}
-            </button>
-          ))}
+      {/* Bulk action toolbar */}
+      {selected.size > 0 && (
+        <div className="sticky top-0 z-40 flex items-center gap-3 px-4 md:px-8 py-2.5 bg-neutral-900 border-b border-neutral-800 text-xs">
+          <span className="text-white font-medium">{selected.size} selected</span>
+          <button onClick={() => bulkPublish(true)}  disabled={bulkWorking} className="px-3 py-1.5 border border-green-800 text-green-400 hover:border-green-600 transition-colors disabled:opacity-40">Publish</button>
+          <button onClick={() => bulkPublish(false)} disabled={bulkWorking} className="px-3 py-1.5 border border-neutral-700 text-neutral-400 hover:border-neutral-500 hover:text-white transition-colors disabled:opacity-40">Unpublish</button>
+          <button onClick={bulkDelete}               disabled={bulkWorking} className="px-3 py-1.5 border border-red-900 text-red-400 hover:border-red-700 transition-colors disabled:opacity-40">Delete</button>
+          <button onClick={clearSelection} className="ml-auto text-neutral-600 hover:text-white transition-colors">✕ Clear</button>
         </div>
       )}
+
+      {/* Group tabs with dropdown subcategories — mirrors frontend behaviour */}
+      <div className="border-b border-neutral-900 px-4 md:px-8">
+        <div className="flex items-center">
+          {groups.map(g => (
+            <div
+              key={g.id}
+              className="relative flex-shrink-0"
+              onMouseEnter={() => g.cats.length > 0 && setOpenDropdown(g.id)}
+              onMouseLeave={() => setOpenDropdown(null)}
+            >
+              <button
+                onClick={() => handleGroup(g.id)}
+                className={`relative px-4 py-3 text-[11px] uppercase tracking-[0.18em] font-medium transition-colors whitespace-nowrap flex items-center gap-1
+                  ${activeGroup === g.id ? 'text-white' : 'text-neutral-600 hover:text-neutral-300'}`}
+              >
+                {g.label}
+                {g.cats.length > 0 && (
+                  <svg
+                    className={`w-2 h-2 transition-transform duration-200 ${openDropdown === g.id ? 'rotate-180 opacity-80' : 'opacity-40'}`}
+                    viewBox="0 0 10 6" fill="none"
+                  >
+                    <path d="M1 1L5 5l4-4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                )}
+                {activeGroup === g.id && (
+                  <span className="absolute bottom-0 left-0 right-0 h-px bg-white" />
+                )}
+              </button>
+
+              {/* Dropdown */}
+              {g.cats.length > 0 && openDropdown === g.id && (
+                <div className="absolute top-full left-0 mt-0 z-50">
+                  <div className="bg-[#111111] border border-neutral-800 py-1 min-w-[200px] shadow-2xl shadow-black/80">
+                    <button
+                      onClick={() => { handleGroup(g.id); setOpenDropdown(null) }}
+                      className={`w-full text-left px-4 py-2.5 text-[10px] uppercase tracking-[0.12em] font-medium whitespace-nowrap transition-colors
+                        ${activeGroup === g.id && !activeSub ? 'text-white bg-neutral-800/60' : 'text-neutral-500 hover:text-white hover:bg-neutral-800/40'}`}
+                    >
+                      All {g.label}
+                    </button>
+                    {g.cats.map(cat => (
+                      <button
+                        key={cat}
+                        onClick={() => { setActiveGroup(g.id); setActiveSub(cat); setOpenDropdown(null) }}
+                        className={`w-full text-left px-4 py-2.5 text-[10px] uppercase tracking-[0.12em] font-medium whitespace-nowrap transition-colors
+                          ${activeSub === cat ? 'text-white bg-neutral-800/60' : 'text-neutral-500 hover:text-white hover:bg-neutral-800/40'}`}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
 
       <div className="p-4 md:p-8">
         {loading ? (
@@ -253,6 +344,18 @@ export default function Projects() {
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={filtered.map(p => p.id)} strategy={verticalListSortingStrategy}>
               <div className="divide-y divide-neutral-900">
+                {/* Select-all header */}
+                <div className="hidden md:flex items-center gap-4 px-1 py-2">
+                  <input type="checkbox"
+                    checked={filtered.length > 0 && selected.size === filtered.length}
+                    onChange={toggleSelectAll}
+                    className="accent-white w-3.5 h-3.5 flex-shrink-0 cursor-pointer"
+                    title="Select all"
+                  />
+                  <span className="text-[10px] text-neutral-600 uppercase tracking-widest">
+                    {selected.size > 0 ? `${selected.size} selected` : 'Select all'}
+                  </span>
+                </div>
                 {filtered.map(p => (
                   <SortableRow key={p.id} id={p.id}>
                     {/* ── Mobile card (< md): tap → action sheet ── */}
@@ -281,6 +384,13 @@ export default function Projects() {
 
                     {/* ── Desktop row (md+): inline actions ── */}
                     <div className="hidden md:flex items-center gap-4 py-4">
+                      {/* Per-row checkbox */}
+                      <input type="checkbox"
+                        checked={selected.has(p.id)}
+                        onChange={() => toggleSelect(p.id)}
+                        onClick={e => e.stopPropagation()}
+                        className="accent-white w-3.5 h-3.5 flex-shrink-0 cursor-pointer"
+                      />
                       <div className="w-14 h-10 flex-shrink-0 bg-neutral-900 overflow-hidden">
                         {p.coverImage
                           ? <img src={p.coverImage} alt="" className="w-full h-full object-cover" />

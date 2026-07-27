@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react'
+import { compressImage } from '../lib/compressImage'
 
 const API = import.meta.env.VITE_API_URL || '/api'
 
@@ -22,7 +23,8 @@ export default function ImageUpload({ value, onChange, alt, onAltChange, label, 
     setUploading(true)
     const token = localStorage.getItem('token')
     const form = new FormData()
-    form.append('image', file)
+    const compressed = await compressImage(file)
+    form.append('image', compressed)
     try {
       const res = await fetch(`${API}/upload/single`, {
         method: 'POST',
