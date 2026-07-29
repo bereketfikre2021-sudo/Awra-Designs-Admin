@@ -6,6 +6,7 @@ import Btn from '../components/Btn'
 import Field, { Input, Textarea, Select } from '../components/Field'
 import ImageUpload from '../components/ImageUpload'
 import MultiImageUpload from '../components/MultiImageUpload'
+import SeoPreview from '../components/SeoPreview'
 import DraftBanner from '../components/DraftBanner'
 import { useToast, ToastContainer } from '../components/Toast'
 import { useUnsavedWarning } from '../hooks/useUnsavedWarning'
@@ -15,6 +16,7 @@ const EMPTY = {
   title: '', category: '', filter: '', shortDescription: '', description: '',
   coverImage: '', galleryImages: [], client: '', year: '', type: '',
   services: [], isFeatured: false, isPublished: false, order: 0,
+  seoTitle: '', seoDesc: '',
 }
 
 const FILTER_GROUPS = [
@@ -192,7 +194,29 @@ export default function ProjectForm() {
         </div>
 
         <Field label="Short Description" required error={errors.shortDescription}>
-          <Textarea value={form.shortDescription} onChange={e => set('shortDescription', e.target.value)} error={errors.shortDescription} rows={2} placeholder="One-line summary shown in cards" />
+          <div className="relative">
+            <Textarea value={form.shortDescription} onChange={e => set('shortDescription', e.target.value)} error={errors.shortDescription} rows={2} placeholder="One-line summary shown in cards" />
+            {form.description && !form.shortDescription && (
+              <button
+                type="button"
+                onClick={() => {
+                  // Strip HTML tags (in case description has any), then take first sentence
+                  const plain = form.description.replace(/<[^>]*>/g, '').trim()
+                  const match = plain.match(/^.+?[.!?](?:\s|$)/)
+                  const sentence = match ? match[0].trim() : plain.slice(0, 160).trim()
+                  set('shortDescription', sentence)
+                }}
+                className="mt-1.5 text-[10px] text-neutral-500 hover:text-white transition-colors flex items-center gap-1"
+              >
+                <span>↑</span> Auto-generate from description
+              </button>
+            )}
+            {form.shortDescription && (
+              <p className={`text-[10px] mt-1 ${form.shortDescription.length > 160 ? 'text-yellow-500' : 'text-neutral-700'}`}>
+                {form.shortDescription.length}/160 chars
+              </p>
+            )}
+          </div>
         </Field>
 
         <Field label="Full Description" required error={errors.description}>
@@ -221,6 +245,35 @@ export default function ProjectForm() {
         <Field label="Services (comma-separated)">
           <Input value={servicesInput} onChange={e => setServicesInput(e.target.value)} placeholder="Architecture, Interior, Finishing" />
         </Field>
+
+        {/* SEO section */}
+        <div className="border-t border-neutral-900 pt-5 space-y-4">
+          <p className="text-xs font-medium text-neutral-400 uppercase tracking-widest">SEO</p>
+          <Field label="SEO Title">
+            <Input
+              value={form.seoTitle || ''}
+              onChange={e => set('seoTitle', e.target.value)}
+              placeholder={form.title || 'Page title for search engines'}
+            />
+            <p className={`text-[10px] mt-1 ${(form.seoTitle || form.title).length > 60 ? 'text-yellow-500' : 'text-neutral-700'}`}>
+              {(form.seoTitle || form.title).length}/60 chars
+            </p>
+          </Field>
+          <Field label="Meta Description">
+            <Textarea
+              value={form.seoDesc || ''}
+              onChange={e => set('seoDesc', e.target.value)}
+              rows={2}
+              placeholder={form.shortDescription || '150-character description for search results'}
+            />
+          </Field>
+          <SeoPreview
+            title={form.seoTitle || form.title}
+            description={form.seoDesc || form.shortDescription}
+            slug={form.slug || ''}
+            section="projects"
+          />
+        </div>
 
         <div className="flex items-center gap-6 pt-2">
           <Field label="Display Order">

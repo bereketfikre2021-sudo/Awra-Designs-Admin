@@ -271,16 +271,21 @@ export default function Projects() {
 
       {/* Group tabs with dropdown subcategories — mirrors frontend behaviour */}
       <div className="border-b border-neutral-900 px-4 md:px-8">
-        <div className="flex items-center">
+        <div className="flex items-center overflow-x-auto scrollbar-hide">
           {groups.map(g => (
             <div
               key={g.id}
               className="relative flex-shrink-0"
-              onMouseEnter={() => g.cats.length > 0 && setOpenDropdown(g.id)}
-              onMouseLeave={() => setOpenDropdown(null)}
+              onMouseEnter={() => g.cats.length > 0 && window.matchMedia('(hover: hover)').matches && setOpenDropdown(g.id)}
+              onMouseLeave={() => window.matchMedia('(hover: hover)').matches && setOpenDropdown(null)}
             >
               <button
-                onClick={() => handleGroup(g.id)}
+                onClick={() => {
+                  if (g.cats.length > 0 && !window.matchMedia('(hover: hover)').matches) {
+                    setOpenDropdown(prev => prev === g.id ? null : g.id)
+                    setActiveGroup(g.id); setActiveSub(null)
+                  } else { handleGroup(g.id) }
+                }}
                 className={`relative px-4 py-3 text-[11px] uppercase tracking-[0.18em] font-medium transition-colors whitespace-nowrap flex items-center gap-1
                   ${activeGroup === g.id ? 'text-white' : 'text-neutral-600 hover:text-neutral-300'}`}
               >
@@ -298,9 +303,9 @@ export default function Projects() {
                 )}
               </button>
 
-              {/* Dropdown */}
+              {/* Dropdown — right-aligned to stay on screen */}
               {g.cats.length > 0 && openDropdown === g.id && (
-                <div className="absolute top-full left-0 mt-0 z-50">
+                <div className="absolute top-full right-0 mt-0 z-50">
                   <div className="bg-[#111111] border border-neutral-800 py-1 min-w-[200px] shadow-2xl shadow-black/80">
                     <button
                       onClick={() => { handleGroup(g.id); setOpenDropdown(null) }}

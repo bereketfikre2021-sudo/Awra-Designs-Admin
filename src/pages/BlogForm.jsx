@@ -7,6 +7,7 @@ import Field, { Input, Textarea } from '../components/Field'
 import ImageUpload from '../components/ImageUpload'
 import SeoPreview from '../components/SeoPreview'
 import DraftBanner from '../components/DraftBanner'
+import RichTextEditor from '../components/RichTextEditor'
 import { useToast, ToastContainer } from '../components/Toast'
 import { useUnsavedWarning } from '../hooks/useUnsavedWarning'
 import { useDraftAutosave } from '../hooks/useDraftAutosave'
@@ -54,7 +55,9 @@ export default function BlogForm() {
     const e = {}
     if (!form.title.trim())    e.title    = 'Required'
     if (!form.excerpt.trim())  e.excerpt  = 'Required'
-    if (!form.content.trim())  e.content  = 'Required'
+    // content is HTML — check it's not empty or just an empty paragraph
+    const contentText = form.content.replace(/<[^>]*>/g, '').trim()
+    if (!contentText)          e.content  = 'Required'
     if (!form.category.trim()) e.category = 'Required'
     setErrors(e)
     return Object.keys(e).length === 0
@@ -128,7 +131,13 @@ export default function BlogForm() {
         </Field>
 
         <Field label="Content" required error={errors.content}>
-          <Textarea value={form.content} onChange={e => set('content', e.target.value)} error={errors.content} rows={14} placeholder="Full article content (plain text or Markdown)…" />
+          <RichTextEditor
+            value={form.content}
+            onChange={v => set('content', v)}
+            placeholder="Full article content…"
+            error={errors.content}
+          />
+          {errors.content && <p className="mt-1 text-xs text-red-500">{errors.content}</p>}
         </Field>
 
         {/* Cover image upload */}

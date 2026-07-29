@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
 import { timeAgo } from '../lib/timeAgo'
 import PageHeader from '../components/PageHeader'
+import BarChart from '../components/BarChart'
 
 function StatCard({ label, value, sub, to, accent }) {
   const inner = (
@@ -17,6 +18,7 @@ function StatCard({ label, value, sub, to, accent }) {
 
 export default function Dashboard() {
   const [stats, setStats] = useState(null)
+  const [analytics, setAnalytics] = useState(null)
   const [recent, setRecent] = useState({ messages: [], projects: [], posts: [] })
   const [error, setError] = useState('')
   const navigate = useNavigate()
@@ -25,6 +27,10 @@ export default function Dashboard() {
     api.get('/admin/dashboard')
       .then(d => setStats(d.data))
       .catch(e => setError(e.message))
+
+    api.get('/admin/analytics')
+      .then(d => setAnalytics(d.data))
+      .catch(() => {})
 
     // Load recent items in parallel
     Promise.allSettled([
@@ -76,6 +82,44 @@ export default function Dashboard() {
             ))}
           </div>
         </div>
+
+        {/* Analytics charts */}
+        {analytics && (
+          <div>
+            <p className="text-[10px] uppercase tracking-widest text-neutral-600 mb-3">Activity</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-neutral-900">
+              {/* Messages per week */}
+              <div className="bg-[#0a0a0a] p-5">
+                <p className="text-[10px] uppercase tracking-widest text-neutral-500 mb-1">Messages / Week</p>
+                <p className="text-xl font-medium text-white mb-4">
+                  {analytics.messagesPerWeek.reduce((s, d) => s + d.count, 0)}
+                  <span className="text-xs text-neutral-600 font-normal ml-1">last 8 wks</span>
+                </p>
+                <BarChart data={analytics.messagesPerWeek} color="#a78bfa" height={110} />
+              </div>
+
+              {/* Projects per month */}
+              <div className="bg-[#0a0a0a] p-5">
+                <p className="text-[10px] uppercase tracking-widest text-neutral-500 mb-1">Projects Added / Month</p>
+                <p className="text-xl font-medium text-white mb-4">
+                  {analytics.projectsPerMonth.reduce((s, d) => s + d.count, 0)}
+                  <span className="text-xs text-neutral-600 font-normal ml-1">last 6 mo</span>
+                </p>
+                <BarChart data={analytics.projectsPerMonth} color="#ffffff" height={110} />
+              </div>
+
+              {/* Blog posts per month */}
+              <div className="bg-[#0a0a0a] p-5">
+                <p className="text-[10px] uppercase tracking-widest text-neutral-500 mb-1">Blog Posts / Month</p>
+                <p className="text-xl font-medium text-white mb-4">
+                  {analytics.postsPerMonth.reduce((s, d) => s + d.count, 0)}
+                  <span className="text-xs text-neutral-600 font-normal ml-1">last 6 mo</span>
+                </p>
+                <BarChart data={analytics.postsPerMonth} color="#34d399" height={110} />
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Recent activity columns */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

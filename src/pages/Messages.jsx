@@ -7,7 +7,53 @@ import { useUnread } from '../context/UnreadContext'
 
 // ── Message detail panel (used as both desktop side-pane and mobile overlay) ──
 function MessageDetail({ msg, showArchived, onMarkRead, onArchive, onDelete, onClose }) {
+  const [replying, setReplying] = useState(false)
+  const [replySubject, setReplySubject] = useState('')
+  const [replyBody, setReplyBody] = useState('')
+  const [sending, setSending] = useState(false)
+  const [replyError, setReplyError] = useState('')
+  const [replySuccess, setReplySuccess] = useState(false)
+  const { show } = useToast()
+
+  // Reset reply form when message changes
+  useEffect(() => {
+    setReplying(false)
+    setReplySubject(msg?.subject ? `Re: ${msg.subject}` : 'Re: Your enquiry')
+    setReplyBody('')
+    setReplyError('')
+    setReplySuccess(false)
+  }, [msg?.id])
+
+  const sendReply = async () => {
+    if (!replySubject.trim() || !replyBody.trim()) {
+      setReplyError('Subject and message are required.')
+      return
+    }
+    setSending(true)
+    setReplyError('')
+    try {
+      const d = await api.post(`/contact/${msg.id}/reply`, {
+        subject: replySubject,
+        body: replyBody,
+      })
+      if (d.mailto) {
+        // No Resend key — open mailto fallback
+        window.location.href = d.mailto
+        setReplying(false)
+        return
+      }
+      setReplySuccess(true)
+      setReplying(false)
+      show(`Reply sent to ${msg.email}`)
+    } catch (e) {
+      setReplyError(e.message)
+    } finally {
+      setSending(false)
+    }
+  }
+
   if (!msg) return null
+
   return (
     <div className="flex-1 overflow-y-auto p-5 md:p-8">
       <div className="max-w-xl">
@@ -37,9 +83,51 @@ function MessageDetail({ msg, showArchived, onMarkRead, onArchive, onDelete, onC
         {msg.subject && <p className="text-sm font-medium text-neutral-300 mb-4">{msg.subject}</p>}
         <p className="text-sm text-neutral-400 leading-relaxed whitespace-pre-wrap border-t border-neutral-900 pt-4">{msg.message}</p>
 
-        <div className="mt-6 pt-4 border-t border-neutral-900 flex items-center gap-4">
-          <a href={`mailto:${msg.email}`} className="text-xs text-neutral-400 hover:text-white transition-colors">Reply via email →</a>
-          {msg.phone && <a href={`tel:${msg.phone}`} className="text-xs text-neutral-400 hover:text-white transition-colors">Call →</a>}
+        {/* Reply section */}
+        <div className="mt-6 pt-4 border-t border-neutral-900">
+          {replySuccess ? (
+            <p className="text-xs text-green-400">✓ Reply sent to {msg.email}</p>
+          ) : replying ? (
+            <div className="space-y-3">
+              <p className="text-xs font-medium text-neutral-400 uppercase tracking-widest">Reply to {msg.name}</p>
+              <input
+                type="text"
+                value={replySubject}
+                onChange={e => setReplySubject(e.target.value)}
+                placeholder="Subject"
+                className="w-full bg-[#0a0a0a] border border-neutral-800 px-3 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-neutral-500"
+              />
+              <textarea
+                value={replyBody}
+                onChange={e => setReplyBody(e.target.value)}
+                rows={6}
+                placeholder={`Hi ${msg.name},\n\nThank you for reaching out…`}
+                className="w-full bg-[#0a0a0a] border border-neutral-800 px-3 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-neutral-500 resize-y"
+              />
+              {replyError && <p className="text-xs text-red-400">{replyError}</p>}
+              <div className="flex items-center gap-2">
+                <Btn onClick={sendReply} disabled={sending}>
+                  {sending ? 'Sending…' : `Send to ${msg.email}`}
+                </Btn>
+                <Btn variant="secondary" onClick={() => { setReplying(false); setReplyError('') }}>
+                  Cancel
+                </Btn>
+                <a href={`mailto:${msg.email}?subject=${encodeURIComponent(replySubject)}&body=${encodeURIComponent(replyBody)}`}
+                  className="ml-auto text-[10px] text-neutral-600 hover:text-white transition-colors">
+                  Open in mail app →
+                </a>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-4">
+              <Btn onClick={() => setReplying(true)}>Reply</Btn>
+              {msg.phone && (
+                <a href={`tel:${msg.phone}`} className="text-xs text-neutral-400 hover:text-white transition-colors">
+                  Call →
+                </a>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

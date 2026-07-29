@@ -1,12 +1,12 @@
 /**
  * Mimics a Google search result snippet.
- * Props: title, description, slug
+ * Props: title, description, slug, section ('blog' | 'projects' | custom string)
  */
-export default function SeoPreview({ title, description, slug }) {
+export default function SeoPreview({ title, description, slug, section = 'blog' }) {
   if (!title && !description) return null
   const displayTitle = title || 'Page Title'
   const displayDesc  = description || 'Meta description will appear here.'
-  const displayUrl   = `awradesigns.com › blog › ${slug || 'post-slug'}`
+  const displayUrl   = `awradesigns.com › ${section} › ${slug || `${section}-slug`}`
 
   return (
     <div className="border border-neutral-800 bg-neutral-950 p-4 rounded">

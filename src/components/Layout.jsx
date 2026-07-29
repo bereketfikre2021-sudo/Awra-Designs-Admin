@@ -13,6 +13,7 @@ const links = [
   { to: '/faq',         label: 'FAQ',          icon: '?' },
   { to: '/blog',        label: 'Blog',         icon: '◈' },
   { to: '/messages',    label: 'Messages',     icon: '◻', badge: true },
+  { to: '/activity',    label: 'Activity',     icon: '◎' },
   { to: '/settings',    label: 'Settings',     icon: '⚙' },
 ]
 
