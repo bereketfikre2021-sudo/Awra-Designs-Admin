@@ -14,6 +14,7 @@ const links = [
   { to: '/blog',        label: 'Blog',         icon: '◈' },
   { to: '/messages',    label: 'Messages',     icon: '◻', badge: true },
   { to: '/activity',    label: 'Activity',     icon: '◎' },
+  { to: '/team',        label: 'Team',         icon: '◑', adminOnly: true },
   { to: '/settings',    label: 'Settings',     icon: '⚙' },
 ]
 
@@ -30,16 +31,17 @@ export default function Layout() {
 
   const closeSidebar = () => setSidebarOpen(false)
 
+  const visibleLinks = links.filter(l => !l.adminOnly || admin?.role === 'admin')
+
   const SidebarContent = () => (
     <>
       <div className="px-5 py-6 border-b border-neutral-900 flex items-center justify-between">
         <span className="text-sm font-medium text-white tracking-wide">Awra Admin</span>
-        {/* Close button — mobile only */}
         <button onClick={closeSidebar} className="md:hidden text-neutral-500 hover:text-white text-lg leading-none">✕</button>
       </div>
 
       <nav className="flex-1 py-4 px-2 overflow-y-auto">
-        {links.map(({ to, label, icon, badge }) => (
+        {visibleLinks.map(({ to, label, icon, badge }) => (
           <NavLink
             key={to}
             to={to}
@@ -63,7 +65,20 @@ export default function Layout() {
       </nav>
 
       <div className="px-4 py-4 border-t border-neutral-900">
-        <p className="text-xs text-neutral-600 truncate mb-2">{admin?.email}</p>
+        {/* Avatar + name */}
+        <div className="flex items-center gap-2.5 mb-3">
+          {admin?.avatar
+            ? <img src={admin.avatar} alt={admin.name} className="w-7 h-7 rounded-full object-cover border border-neutral-700 flex-shrink-0" />
+            : <div className="w-7 h-7 rounded-full bg-neutral-800 border border-neutral-700 flex items-center justify-center text-[10px] font-medium text-neutral-400 flex-shrink-0">
+                {admin?.name ? admin.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() : '?'}
+              </div>
+          }
+          <div className="min-w-0">
+            <p className="text-xs text-white truncate">{admin?.name || 'Admin'}</p>
+            <p className="text-[10px] text-neutral-600 uppercase tracking-wider">{admin?.role || 'admin'}</p>
+          </div>
+        </div>
+        <p className="text-[10px] text-neutral-700 truncate mb-2">{admin?.email}</p>
         <button
           onClick={handleLogout}
           className="w-full text-left text-xs text-neutral-500 hover:text-white transition-colors py-1"

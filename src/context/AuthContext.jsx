@@ -13,7 +13,11 @@ export function AuthProvider({ children }) {
     const token = localStorage.getItem('token')
     if (!token) { setLoading(false); return }
     api.get('/auth/me')
-      .then(d => { setAdmin(d.data); setLoading(false) })
+      .then(d => {
+        setAdmin(d.data)
+        localStorage.setItem('admin', JSON.stringify(d.data))
+        setLoading(false)
+      })
       .catch(() => { logout(); setLoading(false) })
   }, [])
 
@@ -32,8 +36,13 @@ export function AuthProvider({ children }) {
     setAdmin(null)
   }
 
+  const updateProfile = (updated) => {
+    setAdmin(updated)
+    localStorage.setItem('admin', JSON.stringify(updated))
+  }
+
   return (
-    <AuthContext.Provider value={{ admin, login, logout, loading }}>
+    <AuthContext.Provider value={{ admin, login, logout, loading, updateProfile }}>
       {loading ? (
         <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
           <div className="w-6 h-6 border border-neutral-700 border-t-white rounded-full animate-spin" />

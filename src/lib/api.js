@@ -13,6 +13,19 @@ async function request(method, path, body) {
     body: body !== undefined ? JSON.stringify(body) : undefined,
   })
 
+  // Auto-logout on 401 — token expired or invalid
+  if (res.status === 401) {
+    localStorage.removeItem('token')
+    localStorage.removeItem('admin')
+    // Redirect to login without a full page reload loop
+    if (!window.location.pathname.includes('/login')) {
+      window.location.href = '/login'
+    }
+    const err = new Error('Session expired. Please sign in again.')
+    err.status = 401
+    throw err
+  }
+
   const data = await res.json()
 
   if (!res.ok) {
@@ -25,9 +38,9 @@ async function request(method, path, body) {
 }
 
 export const api = {
-  get:    (path)        => request('GET', path),
-  post:   (path, body)  => request('POST', path, body),
-  put:    (path, body)  => request('PUT', path, body),
-  patch:  (path, body)  => request('PATCH', path, body),
-  delete: (path)        => request('DELETE', path),
+  get:    (path)              => request('GET',    path),
+  post:   (path, body)        => request('POST',   path, body),
+  put:    (path, body)        => request('PUT',    path, body),
+  patch:  (path, body)        => request('PATCH',  path, body),
+  delete: (path, body)        => request('DELETE', path, body),
 }
