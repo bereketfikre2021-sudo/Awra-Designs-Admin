@@ -7,6 +7,7 @@ import Field, { Input, Textarea } from '../components/Field'
 import ImageUpload from '../components/ImageUpload'
 import SeoPreview from '../components/SeoPreview'
 import DraftBanner from '../components/DraftBanner'
+import ScheduleInput from '../components/ScheduleInput'
 import RichTextEditor from '../components/RichTextEditor'
 import { useToast, ToastContainer } from '../components/Toast'
 import { useUnsavedWarning } from '../hooks/useUnsavedWarning'
@@ -15,7 +16,7 @@ import { useDraftAutosave } from '../hooks/useDraftAutosave'
 const EMPTY = {
   title: '', excerpt: '', content: '', coverImage: '', category: '',
   tags: [], author: 'Awra Designs', readTime: '',
-  isPublished: false, seoTitle: '', seoDesc: '', ogImage: '',
+  isPublished: false, scheduledAt: null, seoTitle: '', seoDesc: '', ogImage: '',
 }
 
 export default function BlogForm() {
@@ -179,10 +180,14 @@ export default function BlogForm() {
           />
         </div>
 
-        <label className="flex items-center gap-2 cursor-pointer pt-2">
-          <input type="checkbox" checked={form.isPublished} onChange={e => set('isPublished', e.target.checked)} className="accent-white" />
-          <span className="text-xs text-neutral-400">Publish immediately</span>
-        </label>
+        <ScheduleInput
+          isPublished={form.isPublished}
+          scheduledAt={form.scheduledAt || null}
+          onChange={({ isPublished, scheduledAt }) => {
+            set('isPublished', isPublished)
+            set('scheduledAt', scheduledAt)
+          }}
+        />
 
       </form>
       <ToastContainer />

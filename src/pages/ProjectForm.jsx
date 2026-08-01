@@ -7,6 +7,7 @@ import Field, { Input, Textarea, Select } from '../components/Field'
 import ImageUpload from '../components/ImageUpload'
 import MultiImageUpload from '../components/MultiImageUpload'
 import SeoPreview from '../components/SeoPreview'
+import ScheduleInput from '../components/ScheduleInput'
 import DraftBanner from '../components/DraftBanner'
 import { useToast, ToastContainer } from '../components/Toast'
 import { useUnsavedWarning } from '../hooks/useUnsavedWarning'
@@ -15,7 +16,7 @@ import { useDraftAutosave } from '../hooks/useDraftAutosave'
 const EMPTY = {
   title: '', category: '', filter: '', shortDescription: '', description: '',
   coverImage: '', galleryImages: [], client: '', year: '', type: '',
-  services: [], isFeatured: false, isPublished: false, order: 0,
+  services: [], isFeatured: false, isPublished: false, scheduledAt: null, order: 0,
   seoTitle: '', seoDesc: '',
 }
 
@@ -275,14 +276,19 @@ export default function ProjectForm() {
           />
         </div>
 
-        <div className="flex items-center gap-6 pt-2">
+        <ScheduleInput
+          isPublished={form.isPublished}
+          scheduledAt={form.scheduledAt || null}
+          onChange={({ isPublished, scheduledAt }) => {
+            set('isPublished', isPublished)
+            set('scheduledAt', scheduledAt)
+          }}
+        />
+
+        <div className="flex items-center gap-6">
           <Field label="Display Order">
             <Input type="number" value={form.order} onChange={e => set('order', parseInt(e.target.value) || 0)} min="0" className="w-24" />
           </Field>
-          <label className="flex items-center gap-2 cursor-pointer mt-5">
-            <input type="checkbox" checked={form.isPublished} onChange={e => set('isPublished', e.target.checked)} className="accent-white" />
-            <span className="text-xs text-neutral-400">Published</span>
-          </label>
           <label className="flex items-center gap-2 cursor-pointer mt-5">
             <input type="checkbox" checked={form.isFeatured} onChange={e => set('isFeatured', e.target.checked)} className="accent-white" />
             <span className="text-xs text-neutral-400">Featured</span>

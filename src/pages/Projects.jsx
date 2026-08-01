@@ -409,8 +409,8 @@ export default function Projects() {
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
                         <button onClick={() => toggle(p.id, 'isPublished', !p.isPublished)}
-                          className={`text-xs px-2 py-1 border transition-colors ${p.isPublished ? 'border-green-800 text-green-400 hover:border-green-600' : 'border-neutral-800 text-neutral-500 hover:border-neutral-600'}`}>
-                          {p.isPublished ? 'Published' : 'Draft'}
+                          className={`text-xs px-2 py-1 border transition-colors ${p.isPublished ? 'border-green-800 text-green-400 hover:border-green-600' : p.scheduledAt ? 'border-yellow-900 text-yellow-400' : 'border-neutral-800 text-neutral-500 hover:border-neutral-600'}`}>
+                          {p.isPublished ? 'Published' : p.scheduledAt ? `⏰ ${new Date(p.scheduledAt).toLocaleDateString()}` : 'Draft'}
                         </button>
                         <button onClick={() => toggle(p.id, 'isFeatured', !p.isFeatured)}
                           className={`text-xs px-2 py-1 border transition-colors ${p.isFeatured ? 'border-yellow-800 text-yellow-400 hover:border-yellow-600' : 'border-neutral-800 text-neutral-500 hover:border-neutral-600'}`}>
