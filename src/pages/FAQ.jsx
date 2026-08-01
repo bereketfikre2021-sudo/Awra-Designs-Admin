@@ -4,6 +4,7 @@ import PageHeader from '../components/PageHeader'
 import Btn from '../components/Btn'
 import Field, { Input, Textarea } from '../components/Field'
 import { useToast, ToastContainer } from '../components/Toast'
+import { EditIcon, TrashIcon, PublishIcon, UnpublishIcon } from '../components/Icons'
 
 const EMPTY = { question: '', answer: '', category: '', order: 0, isPublished: true }
 
@@ -21,21 +22,21 @@ function ActionSheet({ item, onClose, onEdit, onTogglePublish, onDelete }) {
           <p className="text-sm font-medium text-white line-clamp-2">{item.question}</p>
           {item.category && <p className="text-[10px] text-neutral-500 mt-0.5">{item.category}</p>}
         </div>
-        <div className="py-2">
+        <div className="py-1">
           <button onClick={() => { onEdit(); onClose() }}
             className="flex items-center gap-3 px-5 py-3.5 text-sm text-white hover:bg-neutral-900 transition-colors w-full text-left">
-            <span className="w-5 text-center">✏️</span> Edit
+            <EditIcon /> Edit
           </button>
           <button onClick={() => { onTogglePublish(); onClose() }}
             className="flex items-center gap-3 px-5 py-3.5 text-sm w-full text-left hover:bg-neutral-900 transition-colors">
-            <span className="w-5 text-center">{item.isPublished ? '🔴' : '🟢'}</span>
+            {item.isPublished ? <UnpublishIcon /> : <PublishIcon />}
             <span className={item.isPublished ? 'text-neutral-400' : 'text-green-400'}>
               {item.isPublished ? 'Hide from site' : 'Show on site'}
             </span>
           </button>
           <button onClick={() => { onDelete(); onClose() }}
             className="flex items-center gap-3 px-5 py-3.5 text-sm text-red-400 w-full text-left hover:bg-neutral-900 transition-colors">
-            <span className="w-5 text-center">🗑</span> Delete
+            <TrashIcon /> Delete
           </button>
         </div>
         <div className="px-5 pb-8 pt-2">

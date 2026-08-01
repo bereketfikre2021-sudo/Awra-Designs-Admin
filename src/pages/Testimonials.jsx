@@ -1,16 +1,13 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import {
-  DndContext, closestCenter, PointerSensor, useSensor, useSensors,
-} from '@dnd-kit/core'
-import {
-  SortableContext, verticalListSortingStrategy, arrayMove,
-} from '@dnd-kit/sortable'
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
+import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable'
 import { api } from '../lib/api'
 import PageHeader from '../components/PageHeader'
 import Btn from '../components/Btn'
 import SortableRow from '../components/SortableRow'
 import { useToast, ToastContainer } from '../components/Toast'
+import { EditIcon, TrashIcon, PublishIcon, UnpublishIcon, StarIcon } from '../components/Icons'
 
 function ActionSheet({ item, onClose, onTogglePublish, onToggleFeatured, onDelete }) {
   if (!item) return null
@@ -33,26 +30,26 @@ function ActionSheet({ item, onClose, onTogglePublish, onToggleFeatured, onDelet
             <p className="text-[10px] text-neutral-500">{item.position}</p>
           </div>
         </div>
-        <div className="py-2">
+        <div className="py-1">
           <Link to={`/testimonials/${item.id}`} onClick={onClose}
             className="flex items-center gap-3 px-5 py-3.5 text-sm text-white hover:bg-neutral-900 transition-colors">
-            <span className="w-5 text-center">✏️</span> Edit
+            <EditIcon /> Edit
           </Link>
           <button onClick={() => { onTogglePublish(); onClose() }}
             className="flex items-center gap-3 px-5 py-3.5 text-sm w-full text-left hover:bg-neutral-900 transition-colors">
-            <span className="w-5 text-center">{item.isPublished ? '🔴' : '🟢'}</span>
+            {item.isPublished ? <UnpublishIcon /> : <PublishIcon />}
             <span className={item.isPublished ? 'text-neutral-400' : 'text-green-400'}>
               {item.isPublished ? 'Unpublish' : 'Publish'}
             </span>
           </button>
           <button onClick={() => { onToggleFeatured(); onClose() }}
             className="flex items-center gap-3 px-5 py-3.5 text-sm w-full text-left hover:bg-neutral-900 transition-colors">
-            <span className="w-5 text-center">{item.isFeatured ? '⭐' : '☆'}</span>
+            <span className={item.isFeatured ? 'text-yellow-400' : 'text-neutral-400'}><StarIcon filled={item.isFeatured} /></span>
             <span className="text-neutral-300">{item.isFeatured ? 'Remove Featured' : 'Mark as Featured'}</span>
           </button>
           <button onClick={() => { onDelete(); onClose() }}
             className="flex items-center gap-3 px-5 py-3.5 text-sm text-red-400 w-full text-left hover:bg-neutral-900 transition-colors">
-            <span className="w-5 text-center">🗑</span> Delete
+            <TrashIcon /> Delete
           </button>
         </div>
         <div className="px-5 pb-8 pt-2">
@@ -144,7 +141,7 @@ export default function Testimonials() {
                         <span className={`text-[10px] px-1.5 py-0.5 border ${t.isPublished ? 'border-green-900 text-green-500' : 'border-neutral-800 text-neutral-600'}`}>
                           {t.isPublished ? 'Live' : 'Draft'}
                         </span>
-                        {t.isFeatured && <span className="text-yellow-500 text-xs">★</span>}
+                        {t.isFeatured && <span className="text-yellow-400"><StarIcon filled /></span>}
                         <svg className="w-3.5 h-3.5 text-neutral-600" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth="1.5">
                           <path strokeLinecap="round" d="M4 5h8M4 8h8M4 11h8" />
                         </svg>
@@ -169,8 +166,8 @@ export default function Testimonials() {
                           {t.isPublished ? 'Published' : 'Draft'}
                         </button>
                         <button onClick={() => toggle(t.id, 'isFeatured', !t.isFeatured)}
-                          className={`text-xs px-2 py-1 border transition-colors ${t.isFeatured ? 'border-yellow-800 text-yellow-400' : 'border-neutral-800 text-neutral-500'}`}>
-                          {t.isFeatured ? '★' : '☆'}
+                          className={`flex items-center justify-center px-2 py-1 border transition-colors ${t.isFeatured ? 'border-yellow-800 text-yellow-400' : 'border-neutral-800 text-neutral-500'}`}>
+                          <StarIcon filled={t.isFeatured} />
                         </button>
                         <Link to={`/testimonials/${t.id}`}><Btn variant="secondary">Edit</Btn></Link>
                         <Btn variant="danger" onClick={() => remove(t.id)}>Delete</Btn>

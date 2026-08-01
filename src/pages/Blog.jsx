@@ -5,6 +5,7 @@ import PageHeader from '../components/PageHeader'
 import Btn from '../components/Btn'
 import { useToast, ToastContainer } from '../components/Toast'
 import { timeAgo } from '../lib/timeAgo'
+import { EditIcon, TrashIcon, CopyIcon, ExternalLinkIcon, PublishIcon, UnpublishIcon, CloseIcon } from '../components/Icons'
 
 const FRONTEND = import.meta.env.VITE_FRONTEND_URL || 'http://localhost:5173'
 
@@ -29,31 +30,31 @@ function ActionSheet({ post, onClose, onTogglePublish, onDuplicate, onDelete }) 
             <p className="text-[10px] text-neutral-500">{post.category}</p>
           </div>
         </div>
-        <div className="py-2">
+        <div className="py-1">
           <Link to={`/blog/${post.id}`} onClick={onClose}
             className="flex items-center gap-3 px-5 py-3.5 text-sm text-white hover:bg-neutral-900 transition-colors">
-            <span className="w-5 text-center">✏️</span> Edit Post
+            <EditIcon /> Edit Post
           </Link>
           <button onClick={() => { onTogglePublish(); onClose() }}
             className="flex items-center gap-3 px-5 py-3.5 text-sm w-full text-left hover:bg-neutral-900 transition-colors">
-            <span className="w-5 text-center">{post.isPublished ? '🔴' : '🟢'}</span>
+            {post.isPublished ? <UnpublishIcon /> : <PublishIcon />}
             <span className={post.isPublished ? 'text-neutral-400' : 'text-green-400'}>
               {post.isPublished ? 'Unpublish' : 'Publish'}
             </span>
           </button>
           <button onClick={() => { onDuplicate(); onClose() }}
             className="flex items-center gap-3 px-5 py-3.5 text-sm text-neutral-300 w-full text-left hover:bg-neutral-900 transition-colors">
-            <span className="w-5 text-center">📋</span> Duplicate
+            <CopyIcon /> Duplicate
           </button>
           {post.isPublished && (
             <a href={`${FRONTEND}/#blog`} target="_blank" rel="noopener noreferrer" onClick={onClose}
               className="flex items-center gap-3 px-5 py-3.5 text-sm text-neutral-300 w-full text-left hover:bg-neutral-900 transition-colors">
-              <span className="w-5 text-center">↗</span> View on site
+              <ExternalLinkIcon /> View on site
             </a>
           )}
           <button onClick={() => { onDelete(); onClose() }}
             className="flex items-center gap-3 px-5 py-3.5 text-sm text-red-400 w-full text-left hover:bg-neutral-900 transition-colors">
-            <span className="w-5 text-center">🗑</span> Delete
+            <TrashIcon /> Delete
           </button>
         </div>
         <div className="px-5 pb-8 pt-2">
@@ -132,7 +133,7 @@ export default function Blog() {
             placeholder="Search posts…"
             className="w-full bg-neutral-900 border border-neutral-800 text-sm text-white px-3 py-1.5 pr-7 focus:border-neutral-600 transition-colors placeholder-neutral-600" />
           {searchInput && (
-            <button type="button" onClick={clearSearch} className="absolute right-2 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-white text-xs">✕</button>
+            <button type="button" onClick={clearSearch} className="absolute right-2 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-white"><CloseIcon /></button>
           )}
         </div>
         <Btn type="submit" variant="secondary">Search</Btn>
@@ -195,7 +196,7 @@ export default function Blog() {
                       <Btn variant="ghost" onClick={() => duplicate(p.id)}>Duplicate</Btn>
                       {p.isPublished && p.slug && (
                         <a href={`${FRONTEND}/#blog`} target="_blank" rel="noopener noreferrer">
-                          <Btn variant="ghost">View ↗</Btn>
+                          <Btn variant="ghost"><ExternalLinkIcon /></Btn>
                         </a>
                       )}
                       <Btn variant="danger" onClick={() => remove(p.id)}>Delete</Btn>

@@ -86,7 +86,10 @@ function MessageDetail({ msg, showArchived, onMarkRead, onArchive, onDelete, onC
         {/* Reply section */}
         <div className="mt-6 pt-4 border-t border-neutral-900">
           {replySuccess ? (
-            <p className="text-xs text-green-400">✓ Reply sent to {msg.email}</p>
+            <p className="text-xs text-green-400 flex items-center gap-1.5">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 6l3 3 5-5"/></svg>
+              Reply sent to {msg.email}
+            </p>
           ) : replying ? (
             <div className="space-y-3">
               <p className="text-xs font-medium text-neutral-400 uppercase tracking-widest">Reply to {msg.name}</p>
@@ -259,7 +262,9 @@ export default function Messages() {
               placeholder="Search…"
               className="w-full bg-neutral-900 border border-neutral-800 text-xs text-white px-3 py-1.5 focus:border-neutral-600 transition-colors placeholder-neutral-600" />
             {searchInput && (
-              <button onClick={() => setSearchInput('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-neutral-500 text-xs">✕</button>
+              <button onClick={() => setSearchInput('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-white">
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M1 1l8 8M9 1l-8 8"/></svg>
+              </button>
             )}
           </div>
         )}

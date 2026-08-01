@@ -2,20 +2,26 @@ import { useState } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useUnread } from '../context/UnreadContext'
+import {
+  DashboardIcon, AnalyticsNavIcon, ProjectsIcon, CategoriesIcon,
+  MediaIcon, AboutIcon, TestimonialsIcon, FAQIcon, BlogIcon,
+  MessagesIcon, ActivityNavIcon, TeamIcon, SettingsIcon,
+} from './Icons'
 
 const links = [
-  { to: '/',            label: 'Dashboard',    icon: '▦' },
-  { to: '/projects',    label: 'Projects',     icon: '◉' },
-  { to: '/categories',  label: 'Categories',   icon: '⊞' },
-  { to: '/media',       label: 'Media',        icon: '⊡' },
-  { to: '/about',       label: 'About',        icon: '◌' },
-  { to: '/testimonials',label: 'Testimonials', icon: '❝' },
-  { to: '/faq',         label: 'FAQ',          icon: '?' },
-  { to: '/blog',        label: 'Blog',         icon: '◈' },
-  { to: '/messages',    label: 'Messages',     icon: '◻', badge: true },
-  { to: '/activity',    label: 'Activity',     icon: '◎' },
-  { to: '/team',        label: 'Team',         icon: '◑', adminOnly: true },
-  { to: '/settings',    label: 'Settings',     icon: '⚙' },
+  { to: '/',            label: 'Dashboard',    Icon: DashboardIcon },
+  { to: '/analytics',   label: 'Analytics',    Icon: AnalyticsNavIcon },
+  { to: '/projects',    label: 'Projects',     Icon: ProjectsIcon },
+  { to: '/categories',  label: 'Categories',   Icon: CategoriesIcon },
+  { to: '/media',       label: 'Media',        Icon: MediaIcon },
+  { to: '/about',       label: 'About',        Icon: AboutIcon },
+  { to: '/testimonials',label: 'Testimonials', Icon: TestimonialsIcon },
+  { to: '/faq',         label: 'FAQ',          Icon: FAQIcon },
+  { to: '/blog',        label: 'Blog',         Icon: BlogIcon },
+  { to: '/messages',    label: 'Messages',     Icon: MessagesIcon, badge: true },
+  { to: '/activity',    label: 'Activity',     Icon: ActivityNavIcon },
+  { to: '/team',        label: 'Team',         Icon: TeamIcon, adminOnly: true },
+  { to: '/settings',    label: 'Settings',     Icon: SettingsIcon },
 ]
 
 export default function Layout() {
@@ -41,7 +47,7 @@ export default function Layout() {
       </div>
 
       <nav className="flex-1 py-4 px-2 overflow-y-auto">
-        {visibleLinks.map(({ to, label, icon, badge }) => (
+        {visibleLinks.map(({ to, label, Icon, badge }) => (
           <NavLink
             key={to}
             to={to}
@@ -53,7 +59,7 @@ export default function Layout() {
               }`
             }
           >
-            <span className="w-4 text-center text-base leading-none">{icon}</span>
+            <span className="w-4 flex items-center justify-center flex-shrink-0"><Icon /></span>
             <span className="flex-1">{label}</span>
             {badge && unread > 0 && (
               <span className="ml-auto min-w-[18px] h-[18px] flex items-center justify-center bg-red-600 text-white text-[10px] font-bold rounded-full px-1">

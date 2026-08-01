@@ -41,20 +41,68 @@ const STATIC_GROUPS = [
   { id: 'Outdoor', label: 'Outdoor', cats: ['Fences, Gates & Compound Seating'] },
 ]
 
-// ── Mobile action sheet ───────────────────────────────────────────────────────
+// ── SVG icons ─────────────────────────────────────────────────────────────────
+const Icons = {
+  Edit: () => (
+    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M10.5 2.5l2 2-7 7H3.5v-2l7-7z"/>
+    </svg>
+  ),
+  Publish: () => (
+    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="7.5" cy="7.5" r="5.5"/>
+      <path d="M5 7.5l2 2 3-3"/>
+    </svg>
+  ),
+  Unpublish: () => (
+    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="7.5" cy="7.5" r="5.5"/>
+      <path d="M5.5 5.5l4 4M9.5 5.5l-4 4"/>
+    </svg>
+  ),
+  Star: ({ filled }) => (
+    <svg width="15" height="15" viewBox="0 0 15 15" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M7.5 1.5l1.8 3.6 4 .6-2.9 2.8.7 4-3.6-1.9-3.6 1.9.7-4L1.7 5.7l4-.6 1.8-3.6z"/>
+    </svg>
+  ),
+  Copy: () => (
+    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="5" y="5" width="7" height="8" rx="1"/>
+      <path d="M10 5V3a1 1 0 00-1-1H3a1 1 0 00-1 1v7a1 1 0 001 1h2"/>
+    </svg>
+  ),
+  ExternalLink: () => (
+    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6 3H3a1 1 0 00-1 1v8a1 1 0 001 1h8a1 1 0 001-1V9"/>
+      <path d="M9 2h4v4M13 2L8 7"/>
+    </svg>
+  ),
+  Trash: () => (
+    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2 4h11M5 4V2h5v2M6 7v5M9 7v5M3 4l1 9h7l1-9"/>
+    </svg>
+  ),
+  Menu: () => (
+    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round">
+      <circle cx="7.5" cy="3.5" r="0.8" fill="currentColor"/>
+      <circle cx="7.5" cy="7.5" r="0.8" fill="currentColor"/>
+      <circle cx="7.5" cy="11.5" r="0.8" fill="currentColor"/>
+    </svg>
+  ),
+}
+
+// ── Action sheet (mobile + desktop ⋯ menu) ────────────────────────────────────
 function ActionSheet({ project, onClose, onTogglePublish, onToggleFeatured, onDuplicate, onDelete }) {
   if (!project) return null
   return (
-    <div className="fixed inset-0 z-50 md:hidden" onClick={onClose}>
-      {/* Backdrop */}
+    <div className="fixed inset-0 z-50" onClick={onClose}>
       <div className="absolute inset-0 bg-black/60" />
-      {/* Sheet */}
       <div
-        className="absolute bottom-0 left-0 right-0 bg-[#111] border-t border-neutral-800 rounded-t-xl overflow-hidden"
+        className="absolute bottom-0 left-0 right-0 md:bottom-auto md:top-1/4 md:left-1/2 md:-translate-x-1/2 md:w-80 bg-[#111] border border-neutral-800 md:rounded overflow-hidden shadow-2xl shadow-black/80"
         onClick={e => e.stopPropagation()}
       >
-        {/* Handle */}
-        <div className="flex justify-center pt-3 pb-1">
+        {/* Handle (mobile only) */}
+        <div className="flex justify-center pt-3 pb-1 md:hidden">
           <div className="w-10 h-1 bg-neutral-700 rounded-full" />
         </div>
 
@@ -72,50 +120,47 @@ function ActionSheet({ project, onClose, onTogglePublish, onToggleFeatured, onDu
         </div>
 
         {/* Actions */}
-        <div className="py-2">
+        <div className="py-1">
           <Link to={`/projects/${project.id}`} onClick={onClose}
-            className="flex items-center gap-3 px-5 py-3.5 text-sm text-white hover:bg-neutral-900 transition-colors w-full text-left">
-            <span className="w-5 text-center text-base">✏️</span> Edit Project
+            className="flex items-center gap-3 px-5 py-3 text-sm text-white hover:bg-neutral-900 transition-colors w-full text-left">
+            <Icons.Edit /> Edit Project
           </Link>
 
           <button onClick={() => { onTogglePublish(); onClose() }}
-            className="flex items-center gap-3 px-5 py-3.5 text-sm w-full text-left hover:bg-neutral-900 transition-colors">
-            <span className="w-5 text-center">{project.isPublished ? '🔴' : '🟢'}</span>
+            className="flex items-center gap-3 px-5 py-3 text-sm w-full text-left hover:bg-neutral-900 transition-colors">
+            {project.isPublished ? <Icons.Unpublish /> : <Icons.Publish />}
             <span className={project.isPublished ? 'text-neutral-400' : 'text-green-400'}>
               {project.isPublished ? 'Unpublish' : 'Publish'}
             </span>
           </button>
 
           <button onClick={() => { onToggleFeatured(); onClose() }}
-            className="flex items-center gap-3 px-5 py-3.5 text-sm w-full text-left hover:bg-neutral-900 transition-colors">
-            <span className="w-5 text-center">{project.isFeatured ? '⭐' : '☆'}</span>
-            <span className="text-neutral-300">
-              {project.isFeatured ? 'Remove Featured' : 'Mark as Featured'}
-            </span>
+            className="flex items-center gap-3 px-5 py-3 text-sm w-full text-left hover:bg-neutral-900 transition-colors">
+            <span className={project.isFeatured ? 'text-yellow-400' : 'text-neutral-400'}><Icons.Star filled={project.isFeatured} /></span>
+            <span className="text-neutral-300">{project.isFeatured ? 'Remove Featured' : 'Mark as Featured'}</span>
           </button>
 
           <button onClick={() => { onDuplicate(); onClose() }}
-            className="flex items-center gap-3 px-5 py-3.5 text-sm text-neutral-300 w-full text-left hover:bg-neutral-900 transition-colors">
-            <span className="w-5 text-center">📋</span> Duplicate
+            className="flex items-center gap-3 px-5 py-3 text-sm text-neutral-300 w-full text-left hover:bg-neutral-900 transition-colors">
+            <Icons.Copy /> Duplicate
           </button>
 
           {project.isPublished && (
-            <a href={`${FRONTEND}/#works`} target="_blank" rel="noopener noreferrer"
-              onClick={onClose}
-              className="flex items-center gap-3 px-5 py-3.5 text-sm text-neutral-300 w-full text-left hover:bg-neutral-900 transition-colors">
-              <span className="w-5 text-center">↗</span> View on site
+            <a href={`${FRONTEND}/#works`} target="_blank" rel="noopener noreferrer" onClick={onClose}
+              className="flex items-center gap-3 px-5 py-3 text-sm text-neutral-300 w-full text-left hover:bg-neutral-900 transition-colors">
+              <Icons.ExternalLink /> View on site
             </a>
           )}
 
           <button onClick={() => { onDelete(); onClose() }}
-            className="flex items-center gap-3 px-5 py-3.5 text-sm text-red-400 w-full text-left hover:bg-neutral-900 transition-colors">
-            <span className="w-5 text-center">🗑</span> Delete
+            className="flex items-center gap-3 px-5 py-3 text-sm text-red-400 w-full text-left hover:bg-neutral-900 transition-colors">
+            <Icons.Trash /> Delete
           </button>
         </div>
 
-        <div className="pb-safe px-5 pb-6 pt-2">
+        <div className="px-5 pb-5 pt-2 border-t border-neutral-900">
           <button onClick={onClose}
-            className="w-full py-3 border border-neutral-800 text-sm text-neutral-400 hover:text-white transition-colors">
+            className="w-full py-2.5 border border-neutral-800 text-sm text-neutral-400 hover:text-white transition-colors">
             Cancel
           </button>
         </div>
@@ -125,15 +170,15 @@ function ActionSheet({ project, onClose, onTogglePublish, onToggleFeatured, onDu
 }
 
 export default function Projects() {
-  const [projects, setProjects] = useState([])
-  const [groups, setGroups] = useState(STATIC_GROUPS)
-  const [loading, setLoading] = useState(true)
+  const [projects, setProjects]     = useState([])
+  const [groups, setGroups]         = useState(STATIC_GROUPS)
+  const [loading, setLoading]       = useState(true)
   const [activeGroup, setActiveGroup] = useState('All')
-  const [activeSub, setActiveSub] = useState(null)
+  const [activeSub, setActiveSub]   = useState(null)
   const [openDropdown, setOpenDropdown] = useState(null)
   const [reordering, setReordering] = useState(false)
   const [sheetProject, setSheetProject] = useState(null)
-  const [selected, setSelected] = useState(new Set()) // bulk selection
+  const [selected, setSelected]     = useState(new Set())
   const [bulkWorking, setBulkWorking] = useState(false)
   const { show } = useToast()
   const navigate = useNavigate()
@@ -149,11 +194,7 @@ export default function Projects() {
         setProjects(projRes.data)
         if (groupRes.data?.length > 0) {
           const allGroup = { id: 'All', label: 'All', cats: [] }
-          const apiGroups = groupRes.data.map(g => ({
-            id: g.label,
-            label: g.label,
-            cats: g.subcategories || [],
-          }))
+          const apiGroups = groupRes.data.map(g => ({ id: g.label, label: g.label, cats: g.subcategories || [] }))
           setGroups([allGroup, ...apiGroups])
         }
       })
@@ -185,7 +226,8 @@ export default function Projects() {
     try {
       await Promise.all(reordered.map((p, idx) => api.patch(`/projects/${p.id}`, { order: idx })))
       show('Order saved')
-    } catch (e) { show(e.message, 'error') } finally { setReordering(false) }
+    } catch (e) { show(e.message, 'error') }
+    finally { setReordering(false) }
   }
 
   const toggle = async (id, field, value) => {
@@ -217,7 +259,7 @@ export default function Projects() {
     } catch (e) { show(e.message, 'error') }
   }
 
-  // ── Bulk actions ──────────────────────────────────────────────────────────
+  // ── Bulk actions ─────────────────────────────────────────────────────────
   const toggleSelect = (id) => setSelected(s => {
     const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n
   })
@@ -258,27 +300,30 @@ export default function Projects() {
         action={<Link to="/projects/new"><Btn>+ New</Btn></Link>}
       />
 
-      {/* Bulk action toolbar */}
+      {/* ── Bulk toolbar — only visible when items are selected ── */}
       {selected.size > 0 && (
         <div className="sticky top-0 z-40 flex items-center gap-3 px-4 md:px-8 py-2.5 bg-neutral-900 border-b border-neutral-800 text-xs">
           <span className="text-white font-medium">{selected.size} selected</span>
-          <button onClick={() => bulkPublish(true)}  disabled={bulkWorking} className="px-3 py-1.5 border border-green-800 text-green-400 hover:border-green-600 transition-colors disabled:opacity-40">Publish</button>
-          <button onClick={() => bulkPublish(false)} disabled={bulkWorking} className="px-3 py-1.5 border border-neutral-700 text-neutral-400 hover:border-neutral-500 hover:text-white transition-colors disabled:opacity-40">Unpublish</button>
-          <button onClick={bulkDelete}               disabled={bulkWorking} className="px-3 py-1.5 border border-red-900 text-red-400 hover:border-red-700 transition-colors disabled:opacity-40">Delete</button>
+          <button onClick={() => bulkPublish(true)}  disabled={bulkWorking} className="flex items-center gap-1.5 px-3 py-1.5 border border-green-800 text-green-400 hover:border-green-600 transition-colors disabled:opacity-40">
+            <Icons.Publish /> Publish
+          </button>
+          <button onClick={() => bulkPublish(false)} disabled={bulkWorking} className="flex items-center gap-1.5 px-3 py-1.5 border border-neutral-700 text-neutral-400 hover:border-neutral-500 hover:text-white transition-colors disabled:opacity-40">
+            <Icons.Unpublish /> Unpublish
+          </button>
+          <button onClick={bulkDelete}               disabled={bulkWorking} className="flex items-center gap-1.5 px-3 py-1.5 border border-red-900 text-red-400 hover:border-red-700 transition-colors disabled:opacity-40">
+            <Icons.Trash /> Delete
+          </button>
           <button onClick={clearSelection} className="ml-auto text-neutral-600 hover:text-white transition-colors">✕ Clear</button>
         </div>
       )}
 
-      {/* Group tabs with dropdown subcategories — mirrors frontend behaviour */}
+      {/* ── Group tabs ── */}
       <div className="border-b border-neutral-900 px-4 md:px-8">
         <div className="flex items-center overflow-x-auto scrollbar-hide">
           {groups.map(g => (
-            <div
-              key={g.id}
-              className="relative flex-shrink-0"
+            <div key={g.id} className="relative flex-shrink-0"
               onMouseEnter={() => g.cats.length > 0 && window.matchMedia('(hover: hover)').matches && setOpenDropdown(g.id)}
-              onMouseLeave={() => window.matchMedia('(hover: hover)').matches && setOpenDropdown(null)}
-            >
+              onMouseLeave={() => window.matchMedia('(hover: hover)').matches && setOpenDropdown(null)}>
               <button
                 onClick={() => {
                   if (g.cats.length > 0 && !window.matchMedia('(hover: hover)').matches) {
@@ -287,40 +332,27 @@ export default function Projects() {
                   } else { handleGroup(g.id) }
                 }}
                 className={`relative px-4 py-3 text-[11px] uppercase tracking-[0.18em] font-medium transition-colors whitespace-nowrap flex items-center gap-1
-                  ${activeGroup === g.id ? 'text-white' : 'text-neutral-600 hover:text-neutral-300'}`}
-              >
+                  ${activeGroup === g.id ? 'text-white' : 'text-neutral-600 hover:text-neutral-300'}`}>
                 {g.label}
                 {g.cats.length > 0 && (
-                  <svg
-                    className={`w-2 h-2 transition-transform duration-200 ${openDropdown === g.id ? 'rotate-180 opacity-80' : 'opacity-40'}`}
-                    viewBox="0 0 10 6" fill="none"
-                  >
+                  <svg className={`w-2 h-2 transition-transform duration-200 ${openDropdown === g.id ? 'rotate-180 opacity-80' : 'opacity-40'}`} viewBox="0 0 10 6" fill="none">
                     <path d="M1 1L5 5l4-4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 )}
-                {activeGroup === g.id && (
-                  <span className="absolute bottom-0 left-0 right-0 h-px bg-white" />
-                )}
+                {activeGroup === g.id && <span className="absolute bottom-0 left-0 right-0 h-px bg-white" />}
               </button>
-
-              {/* Dropdown — right-aligned to stay on screen */}
               {g.cats.length > 0 && openDropdown === g.id && (
                 <div className="absolute top-full right-0 mt-0 z-50">
                   <div className="bg-[#111111] border border-neutral-800 py-1 min-w-[200px] shadow-2xl shadow-black/80">
-                    <button
-                      onClick={() => { handleGroup(g.id); setOpenDropdown(null) }}
+                    <button onClick={() => { handleGroup(g.id); setOpenDropdown(null) }}
                       className={`w-full text-left px-4 py-2.5 text-[10px] uppercase tracking-[0.12em] font-medium whitespace-nowrap transition-colors
-                        ${activeGroup === g.id && !activeSub ? 'text-white bg-neutral-800/60' : 'text-neutral-500 hover:text-white hover:bg-neutral-800/40'}`}
-                    >
+                        ${activeGroup === g.id && !activeSub ? 'text-white bg-neutral-800/60' : 'text-neutral-500 hover:text-white hover:bg-neutral-800/40'}`}>
                       All {g.label}
                     </button>
                     {g.cats.map(cat => (
-                      <button
-                        key={cat}
-                        onClick={() => { setActiveGroup(g.id); setActiveSub(cat); setOpenDropdown(null) }}
+                      <button key={cat} onClick={() => { setActiveGroup(g.id); setActiveSub(cat); setOpenDropdown(null) }}
                         className={`w-full text-left px-4 py-2.5 text-[10px] uppercase tracking-[0.12em] font-medium whitespace-nowrap transition-colors
-                          ${activeSub === cat ? 'text-white bg-neutral-800/60' : 'text-neutral-500 hover:text-white hover:bg-neutral-800/40'}`}
-                      >
+                          ${activeSub === cat ? 'text-white bg-neutral-800/60' : 'text-neutral-500 hover:text-white hover:bg-neutral-800/40'}`}>
                         {cat}
                       </button>
                     ))}
@@ -361,13 +393,13 @@ export default function Projects() {
                     {selected.size > 0 ? `${selected.size} selected` : 'Select all'}
                   </span>
                 </div>
+
                 {filtered.map(p => (
                   <SortableRow key={p.id} id={p.id}>
-                    {/* ── Mobile card (< md): tap → action sheet ── */}
-                    <div
-                      className="flex md:hidden items-center gap-3 py-3 cursor-pointer active:bg-neutral-900/50 transition-colors"
-                      onClick={() => setSheetProject(p)}
-                    >
+
+                    {/* ── Mobile: tap card → action sheet ── */}
+                    <div className="flex md:hidden items-center gap-3 py-3 cursor-pointer active:bg-neutral-900/50 transition-colors"
+                      onClick={() => setSheetProject(p)}>
                       <div className="w-12 h-9 flex-shrink-0 bg-neutral-900 overflow-hidden">
                         {p.coverImage
                           ? <img src={p.coverImage} alt="" className="w-full h-full object-cover" />
@@ -378,18 +410,19 @@ export default function Projects() {
                         <p className="text-[10px] text-neutral-600 truncate">{p.category}</p>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
-                        <span className={`text-[10px] px-1.5 py-0.5 border ${p.isPublished ? 'border-green-900 text-green-500' : 'border-neutral-800 text-neutral-600'}`}>
-                          {p.isPublished ? 'Live' : 'Draft'}
+                        <span className={`text-[10px] px-1.5 py-0.5 border ${
+                          p.isPublished ? 'border-green-900 text-green-500' :
+                          p.scheduledAt ? 'border-yellow-900 text-yellow-400' :
+                          'border-neutral-800 text-neutral-600'}`}>
+                          {p.isPublished ? 'Live' : p.scheduledAt ? 'Scheduled' : 'Draft'}
                         </span>
-                        <svg className="w-3.5 h-3.5 text-neutral-600" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth="1.5">
-                          <path strokeLinecap="round" d="M4 5h8M4 8h8M4 11h8" />
-                        </svg>
+                        {/* Three-dot menu icon */}
+                        <span className="text-neutral-600"><Icons.Menu /></span>
                       </div>
                     </div>
 
-                    {/* ── Desktop row (md+): inline actions ── */}
-                    <div className="hidden md:flex items-center gap-4 py-4">
-                      {/* Per-row checkbox */}
+                    {/* ── Desktop: clean row, actions on checkbox select + ⋯ ── */}
+                    <div className="hidden md:flex items-center gap-4 py-3.5">
                       <input type="checkbox"
                         checked={selected.has(p.id)}
                         onChange={() => toggleSelect(p.id)}
@@ -404,28 +437,31 @@ export default function Projects() {
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-white truncate">{p.title}</p>
                         <p className="text-[10px] text-neutral-600 mt-0.5">
-                          {p.category} · {p.year} · edited {timeAgo(p.updatedAt)}
+                          {p.category} · {p.year} · {timeAgo(p.updatedAt)}
                         </p>
                       </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <button onClick={() => toggle(p.id, 'isPublished', !p.isPublished)}
-                          className={`text-xs px-2 py-1 border transition-colors ${p.isPublished ? 'border-green-800 text-green-400 hover:border-green-600' : p.scheduledAt ? 'border-yellow-900 text-yellow-400' : 'border-neutral-800 text-neutral-500 hover:border-neutral-600'}`}>
-                          {p.isPublished ? 'Published' : p.scheduledAt ? `⏰ ${new Date(p.scheduledAt).toLocaleDateString()}` : 'Draft'}
-                        </button>
-                        <button onClick={() => toggle(p.id, 'isFeatured', !p.isFeatured)}
-                          className={`text-xs px-2 py-1 border transition-colors ${p.isFeatured ? 'border-yellow-800 text-yellow-400 hover:border-yellow-600' : 'border-neutral-800 text-neutral-500 hover:border-neutral-600'}`}>
-                          {p.isFeatured ? '★ Featured' : '☆ Feature'}
-                        </button>
-                        <Link to={`/projects/${p.id}`}><Btn variant="secondary">Edit</Btn></Link>
-                        <Btn variant="ghost" onClick={() => duplicate(p.id)}>Duplicate</Btn>
-                        {p.isPublished && (
-                          <a href={`${FRONTEND}/#works`} target="_blank" rel="noopener noreferrer">
-                            <Btn variant="ghost">View ↗</Btn>
-                          </a>
-                        )}
-                        <Btn variant="danger" onClick={() => remove(p.id)}>Delete</Btn>
-                      </div>
+                      {/* Status badge */}
+                      <span className={`text-[10px] px-2 py-0.5 border flex-shrink-0 ${
+                        p.isPublished ? 'border-green-900 text-green-400' :
+                        p.scheduledAt ? 'border-yellow-900 text-yellow-400' :
+                        'border-neutral-800 text-neutral-500'}`}>
+                        {p.isPublished ? 'Published' :
+                         p.scheduledAt ? new Date(p.scheduledAt).toLocaleDateString() :
+                         'Draft'}
+                      </span>
+                      {p.isFeatured && (
+                        <span className="text-yellow-400 flex-shrink-0" title="Featured"><Icons.Star filled /></span>
+                      )}
+                      {/* ⋯ menu button */}
+                      <button
+                        onClick={e => { e.stopPropagation(); setSheetProject(p) }}
+                        className="flex-shrink-0 w-7 h-7 flex items-center justify-center text-neutral-500 hover:text-white border border-transparent hover:border-neutral-700 transition-colors"
+                        title="Actions"
+                      >
+                        <Icons.Menu />
+                      </button>
                     </div>
+
                   </SortableRow>
                 ))}
               </div>
@@ -434,7 +470,7 @@ export default function Projects() {
         )}
       </div>
 
-      {/* Mobile action sheet */}
+      {/* Action sheet — shared between mobile tap and desktop ⋯ */}
       <ActionSheet
         project={sheetProject}
         onClose={() => setSheetProject(null)}
