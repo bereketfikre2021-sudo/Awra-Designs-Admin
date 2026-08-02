@@ -8,20 +8,45 @@ import {
   MessagesIcon, ActivityNavIcon, TeamIcon, SettingsIcon,
 } from './Icons'
 
-const links = [
-  { to: '/',            label: 'Dashboard',    Icon: DashboardIcon },
-  { to: '/analytics',   label: 'Analytics',    Icon: AnalyticsNavIcon },
-  { to: '/projects',    label: 'Projects',     Icon: ProjectsIcon },
-  { to: '/categories',  label: 'Categories',   Icon: CategoriesIcon },
-  { to: '/media',       label: 'Media',        Icon: MediaIcon },
-  { to: '/about',       label: 'About',        Icon: AboutIcon },
-  { to: '/testimonials',label: 'Testimonials', Icon: TestimonialsIcon },
-  { to: '/faq',         label: 'FAQ',          Icon: FAQIcon },
-  { to: '/blog',        label: 'Blog',         Icon: BlogIcon },
-  { to: '/messages',    label: 'Messages',     Icon: MessagesIcon, badge: true },
-  { to: '/activity',    label: 'Activity',     Icon: ActivityNavIcon },
-  { to: '/team',        label: 'Team',         Icon: TeamIcon, adminOnly: true },
-  { to: '/settings',    label: 'Settings',     Icon: SettingsIcon },
+const NAV_GROUPS = [
+  {
+    label: 'Overview',
+    items: [
+      { to: '/',          label: 'Dashboard',  Icon: DashboardIcon },
+      { to: '/analytics', label: 'Analytics',  Icon: AnalyticsNavIcon },
+      { to: '/messages',  label: 'Messages',   Icon: MessagesIcon, badge: true },
+      { to: '/activity',  label: 'Activity',   Icon: ActivityNavIcon },
+    ],
+  },
+  {
+    label: 'Portfolio',
+    items: [
+      { to: '/projects',   label: 'Projects',    Icon: ProjectsIcon },
+      { to: '/categories', label: 'Categories',  Icon: CategoriesIcon },
+      { to: '/media',      label: 'Media',       Icon: MediaIcon },
+    ],
+  },
+  {
+    label: 'Content',
+    items: [
+      { to: '/blog',         label: 'Blog',         Icon: BlogIcon },
+      { to: '/testimonials', label: 'Testimonials', Icon: TestimonialsIcon },
+      { to: '/faq',          label: 'FAQ',          Icon: FAQIcon },
+    ],
+  },
+  {
+    label: 'Company',
+    items: [
+      { to: '/about', label: 'About', Icon: AboutIcon },
+      { to: '/team',  label: 'Team',  Icon: TeamIcon, adminOnly: true },
+    ],
+  },
+  {
+    label: 'System',
+    items: [
+      { to: '/settings', label: 'Settings', Icon: SettingsIcon },
+    ],
+  },
 ]
 
 export default function Layout() {
@@ -37,7 +62,10 @@ export default function Layout() {
 
   const closeSidebar = () => setSidebarOpen(false)
 
-  const visibleLinks = links.filter(l => !l.adminOnly || admin?.role === 'admin')
+  const visibleGroups = NAV_GROUPS.map(group => ({
+    ...group,
+    items: group.items.filter(l => !l.adminOnly || admin?.role === 'admin'),
+  })).filter(group => group.items.length > 0)
 
   const SidebarContent = () => (
     <>
@@ -46,27 +74,34 @@ export default function Layout() {
         <button onClick={closeSidebar} className="md:hidden text-neutral-500 hover:text-white text-lg leading-none">✕</button>
       </div>
 
-      <nav className="flex-1 py-4 px-2 overflow-y-auto">
-        {visibleLinks.map(({ to, label, Icon, badge }) => (
-          <NavLink
-            key={to}
-            to={to}
-            end={to === '/'}
-            onClick={closeSidebar}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 text-xs font-medium rounded transition-colors mb-0.5 ${
-                isActive ? 'bg-neutral-800 text-white' : 'text-neutral-500 hover:text-neutral-300 hover:bg-neutral-900'
-              }`
-            }
-          >
-            <span className="w-4 flex items-center justify-center flex-shrink-0"><Icon /></span>
-            <span className="flex-1">{label}</span>
-            {badge && unread > 0 && (
-              <span className="ml-auto min-w-[18px] h-[18px] flex items-center justify-center bg-red-600 text-white text-[10px] font-bold rounded-full px-1">
-                {unread > 99 ? '99+' : unread}
-              </span>
-            )}
-          </NavLink>
+      <nav className="flex-1 py-3 px-2 overflow-y-auto">
+        {visibleGroups.map((group, gi) => (
+          <div key={group.label} className={gi > 0 ? 'mt-4' : ''}>
+            <p className="px-3 mb-1 text-[9px] font-semibold uppercase tracking-[0.18em] text-neutral-600">
+              {group.label}
+            </p>
+            {group.items.map(({ to, label, Icon, badge }) => (
+              <NavLink
+                key={to}
+                to={to}
+                end={to === '/'}
+                onClick={closeSidebar}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-3 py-2.5 text-xs font-medium rounded transition-colors mb-0.5 ${
+                    isActive ? 'bg-neutral-800 text-white' : 'text-neutral-500 hover:text-neutral-300 hover:bg-neutral-900'
+                  }`
+                }
+              >
+                <span className="w-4 flex items-center justify-center flex-shrink-0"><Icon /></span>
+                <span className="flex-1">{label}</span>
+                {badge && unread > 0 && (
+                  <span className="ml-auto min-w-[18px] h-[18px] flex items-center justify-center bg-red-600 text-white text-[10px] font-bold rounded-full px-1">
+                    {unread > 99 ? '99+' : unread}
+                  </span>
+                )}
+              </NavLink>
+            ))}
+          </div>
         ))}
       </nav>
 

@@ -11,11 +11,13 @@ const EMPTY = { question: '', answer: '', category: '', order: 0, isPublished: t
 function ActionSheet({ item, onClose, onEdit, onTogglePublish, onDelete }) {
   if (!item) return null
   return (
-    <div className="fixed inset-0 z-50 md:hidden" onClick={onClose}>
+    <div className="fixed inset-0 z-50" onClick={onClose}>
       <div className="absolute inset-0 bg-black/60" />
-      <div className="absolute bottom-0 left-0 right-0 bg-[#111] border-t border-neutral-800 rounded-t-xl overflow-hidden"
-        onClick={e => e.stopPropagation()}>
-        <div className="flex justify-center pt-3 pb-1">
+      <div
+        className="absolute bottom-0 left-0 right-0 md:bottom-auto md:top-1/4 md:left-1/2 md:-translate-x-1/2 md:w-72 bg-[#111] border border-neutral-800 md:rounded overflow-hidden shadow-2xl shadow-black/80"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="flex justify-center pt-3 pb-1 md:hidden">
           <div className="w-10 h-1 bg-neutral-700 rounded-full" />
         </div>
         <div className="px-5 py-3 border-b border-neutral-900">
@@ -39,8 +41,8 @@ function ActionSheet({ item, onClose, onEdit, onTogglePublish, onDelete }) {
             <TrashIcon /> Delete
           </button>
         </div>
-        <div className="px-5 pb-8 pt-2">
-          <button onClick={onClose} className="w-full py-3 border border-neutral-800 text-sm text-neutral-400 hover:text-white transition-colors">Cancel</button>
+        <div className="px-5 pb-5 pt-2 border-t border-neutral-900">
+          <button onClick={onClose} className="w-full py-2.5 border border-neutral-800 text-sm text-neutral-400 hover:text-white transition-colors">Cancel</button>
         </div>
       </div>
     </div>
@@ -56,6 +58,8 @@ export default function FAQ() {
   const [errors, setErrors] = useState({})
   const [saving, setSaving] = useState(false)
   const [sheetItem, setSheetItem] = useState(null)
+  const [selected, setSelected] = useState(new Set())
+  const [bulkWorking, setBulkWorking] = useState(false)
 
   const load = () => {
     setLoading(true)
@@ -116,6 +120,39 @@ export default function FAQ() {
     } catch (err) { show(err.message, 'error') }
   }
 
+  // ── Bulk actions ─────────────────────────────────────────────────────────
+  const toggleSelect = (id) => setSelected(s => {
+    const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n
+  })
+  const toggleSelectAll = () => {
+    if (selected.size === items.length) setSelected(new Set())
+    else setSelected(new Set(items.map(i => i.id)))
+  }
+  const clearSelection = () => setSelected(new Set())
+
+  const bulkPublish = async (value) => {
+    setBulkWorking(true)
+    try {
+      await Promise.all([...selected].map(id => api.patch(`/faq/${id}`, { isPublished: value })))
+      setItems(ps => ps.map(p => selected.has(p.id) ? { ...p, isPublished: value } : p))
+      show(`${selected.size} item(s) ${value ? 'published' : 'unpublished'}`)
+      clearSelection()
+    } catch (e) { show(e.message, 'error') }
+    finally { setBulkWorking(false) }
+  }
+
+  const bulkDelete = async () => {
+    if (!confirm(`Delete ${selected.size} item(s)? This cannot be undone.`)) return
+    setBulkWorking(true)
+    try {
+      await Promise.all([...selected].map(id => api.delete(`/faq/${id}`)))
+      setItems(ps => ps.filter(p => !selected.has(p.id)))
+      show(`${selected.size} item(s) deleted`)
+      clearSelection()
+    } catch (e) { show(e.message, 'error') }
+    finally { setBulkWorking(false) }
+  }
+
   // ── Form view ─────────────────────────────────────────────────────────────
   if (editing !== null) {
     return (
@@ -162,6 +199,23 @@ export default function FAQ() {
       <PageHeader title="FAQ" subtitle={`${items.length} items`}
         action={<Btn onClick={openNew}>+ New Question</Btn>} />
 
+      {/* ── Bulk toolbar — only visible when items are selected ── */}
+      {selected.size > 0 && (
+        <div className="sticky top-0 z-40 flex items-center gap-3 px-4 md:px-8 py-2.5 bg-neutral-900 border-b border-neutral-800 text-xs">
+          <span className="text-white font-medium">{selected.size} selected</span>
+          <button onClick={() => bulkPublish(true)}  disabled={bulkWorking} className="flex items-center gap-1.5 px-3 py-1.5 border border-green-800 text-green-400 hover:border-green-600 transition-colors disabled:opacity-40">
+            <PublishIcon /> Publish
+          </button>
+          <button onClick={() => bulkPublish(false)} disabled={bulkWorking} className="flex items-center gap-1.5 px-3 py-1.5 border border-neutral-700 text-neutral-400 hover:border-neutral-500 hover:text-white transition-colors disabled:opacity-40">
+            <UnpublishIcon /> Unpublish
+          </button>
+          <button onClick={bulkDelete}               disabled={bulkWorking} className="flex items-center gap-1.5 px-3 py-1.5 border border-red-900 text-red-400 hover:border-red-700 transition-colors disabled:opacity-40">
+            <TrashIcon /> Delete
+          </button>
+          <button onClick={clearSelection} className="ml-auto text-neutral-600 hover:text-white transition-colors">✕ Clear</button>
+        </div>
+      )}
+
       <div className="p-4 md:p-8">
         {loading ? (
           <div className="flex justify-center py-20"><div className="w-5 h-5 border border-neutral-700 border-t-white rounded-full animate-spin" /></div>
@@ -171,6 +225,19 @@ export default function FAQ() {
           </p>
         ) : (
           <div className="divide-y divide-neutral-900">
+            {/* Select-all header */}
+            <div className="hidden md:flex items-center gap-4 px-1 py-2">
+              <input type="checkbox"
+                checked={items.length > 0 && selected.size === items.length}
+                onChange={toggleSelectAll}
+                className="accent-white w-3.5 h-3.5 flex-shrink-0 cursor-pointer"
+                title="Select all"
+              />
+              <span className="text-[10px] text-neutral-600 uppercase tracking-widest">
+                {selected.size > 0 ? `${selected.size} selected` : 'Select all'}
+              </span>
+            </div>
+
             {items.map(item => (
               <div key={item.id}>
                 {/* Mobile: tap → sheet */}
@@ -191,24 +258,36 @@ export default function FAQ() {
                   </div>
                 </div>
 
-                {/* Desktop: inline */}
-                <div className="hidden md:flex items-start gap-4 py-5">
-                  <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center text-[10px] text-neutral-600 border border-neutral-800 mt-0.5">{item.order}</span>
+                {/* Desktop: clean row — status + ⋯ menu only */}
+                <div className="hidden md:flex items-center gap-4 py-3.5">
+                  <input type="checkbox"
+                    checked={selected.has(item.id)}
+                    onChange={() => toggleSelect(item.id)}
+                    onClick={e => e.stopPropagation()}
+                    className="accent-white w-3.5 h-3.5 flex-shrink-0 cursor-pointer"
+                  />
+                  <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center text-[10px] text-neutral-600 border border-neutral-800">{item.order}</span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-white leading-snug">{item.question}</p>
-                    <p className="text-xs text-neutral-500 mt-1 line-clamp-2">{item.answer}</p>
+                    <p className="text-sm font-medium text-white leading-snug truncate">{item.question}</p>
+                    <p className="text-xs text-neutral-500 mt-0.5 line-clamp-1">{item.answer}</p>
                     {item.category && (
-                      <span className="inline-block mt-2 text-[10px] uppercase tracking-widest text-neutral-600 border border-neutral-800 px-2 py-0.5">{item.category}</span>
+                      <span className="inline-block mt-1 text-[10px] uppercase tracking-widest text-neutral-600 border border-neutral-800 px-2 py-0.5">{item.category}</span>
                     )}
                   </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <button onClick={() => togglePublish(item.id, !item.isPublished)}
-                      className={`text-xs px-2 py-1 border transition-colors ${item.isPublished ? 'border-green-800 text-green-400' : 'border-neutral-800 text-neutral-500'}`}>
-                      {item.isPublished ? 'Published' : 'Draft'}
-                    </button>
-                    <Btn variant="secondary" onClick={() => openEdit(item)}>Edit</Btn>
-                    <Btn variant="danger" onClick={() => remove(item.id)}>Delete</Btn>
-                  </div>
+                  <span className={`text-[10px] px-2 py-0.5 border flex-shrink-0 ${item.isPublished ? 'border-green-900 text-green-400' : 'border-neutral-800 text-neutral-500'}`}>
+                    {item.isPublished ? 'Published' : 'Hidden'}
+                  </span>
+                  <button
+                    onClick={e => { e.stopPropagation(); setSheetItem(item) }}
+                    className="flex-shrink-0 w-7 h-7 flex items-center justify-center text-neutral-500 hover:text-white border border-transparent hover:border-neutral-700 transition-colors"
+                    title="Actions"
+                  >
+                    <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+                      <circle cx="7.5" cy="3.5" r="0.8" fill="currentColor"/>
+                      <circle cx="7.5" cy="7.5" r="0.8" fill="currentColor"/>
+                      <circle cx="7.5" cy="11.5" r="0.8" fill="currentColor"/>
+                    </svg>
+                  </button>
                 </div>
               </div>
             ))}

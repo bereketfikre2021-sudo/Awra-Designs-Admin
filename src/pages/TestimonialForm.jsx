@@ -105,6 +105,7 @@ export default function TestimonialForm() {
         {/* Client photo upload */}
         <ImageUpload
           label="Client Photo"
+          variant="avatar"
           value={form.imageUrl || ''}
           onChange={v => set('imageUrl', v)}
         />
